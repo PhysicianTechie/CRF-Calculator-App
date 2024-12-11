@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Table Processor</title>
+</head>
+<body>
+    <h1>PDF Table Processor</h1>
+    <form id="upload-form">
+        <label for="file">Upload Prot_000 PDF:</label>
+        <input type="file" id="file" name="file" accept="application/pdf">
+        <button type="submit">Upload</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        const form = document.getElementById('upload-form');
+        const resultsDiv = document.getElementById('results');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const fileInput = document.getElementById('file');
+            if (!fileInput.files.length) {
+                alert('Please select a file!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    resultsDiv.innerHTML = `<p>Error: ${data.error}</p>`;
+                } else {
+                    // Display summary
+                    resultsDiv.innerHTML = `
+                        <table border="1">
+                            <tr>
+                                <th>Unique Counts (Rows)</th>
+                                <th>Complete Counts (Black Dots)</th>
+                            </tr>
+                            <tr>
+                                <td>${data.unique_counts}</td>
+                                <td>${data.complete_counts}</td>
+                            </tr>
+                        </table>
+                        <h2>Row Details</h2>
+                        <table border="1">
+                            <tr>
+                                <th>Row Name</th>
+                                <th>Black Dots Count</th>
+                            </tr>
+                            ${data.row_details.map(row => `
+                                <tr>
+                                    <td>${row.row_name}</td>
+                                    <td>${row.dot_count}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
